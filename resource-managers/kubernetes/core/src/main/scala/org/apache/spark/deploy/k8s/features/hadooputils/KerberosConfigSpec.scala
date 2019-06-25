@@ -14,11 +14,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.spark.deploy.k8s
+package org.apache.spark.deploy.k8s.features.hadooputils
 
-import io.fabric8.kubernetes.api.model.HasMetadata
+import io.fabric8.kubernetes.api.model.Secret
 
-private[spark] case class KubernetesDriverSpec(
-    pod: SparkPod,
-    driverKubernetesResources: Seq[HasMetadata],
-    systemProperties: Map[String, String])
+/**
+ * Represents a given configuration of the Kerberos Configuration logic
+ * <p>
+ * - The secret containing a DT, either previously specified or built on the fly
+ * - The name of the secret where the DT will be stored
+ * - The data item-key on the secret which correlates with where the current DT data is stored
+ * - The Job User's username
+ */
+private[spark] case class KerberosConfigSpec(
+    dtSecret: Option[Secret],
+    dtSecretName: String,
+    dtSecretItemKey: String,
+    jobUserName: String)

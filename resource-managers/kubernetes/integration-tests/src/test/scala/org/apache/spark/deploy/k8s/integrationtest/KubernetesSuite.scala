@@ -38,7 +38,7 @@ import org.apache.spark.internal.Logging
 
 private[spark] class KubernetesSuite extends SparkFunSuite
   with BeforeAndAfterAll with BeforeAndAfter with BasicTestsSuite with SecretsTestsSuite
-  with PythonTestsSuite with ClientModeTestsSuite
+  with PythonTestsSuite with ClientModeTestsSuite with PodTemplateSuite
   with Logging with Eventually with Matchers {
 
   import KubernetesSuite._
@@ -67,6 +67,7 @@ private[spark] class KubernetesSuite extends SparkFunSuite
     s"${(1024 + memOverheadConstant*1024 + additionalMemory).toInt}Mi"
 
   override def beforeAll(): Unit = {
+    super.beforeAll()
     // The scalatest-maven-plugin gives system properties that are referenced but not set null
     // values. We need to remove the null-value properties before initializing the test backend.
     val nullValueProperties = System.getProperties.asScala
@@ -98,7 +99,11 @@ private[spark] class KubernetesSuite extends SparkFunSuite
   }
 
   override def afterAll(): Unit = {
-    testBackend.cleanUp()
+    try {
+      testBackend.cleanUp()
+    } finally {
+      super.afterAll()
+    }
   }
 
   before {
@@ -283,21 +288,21 @@ private[spark] class KubernetesSuite extends SparkFunSuite
 
   protected def doBasicExecutorPodCheck(executorPod: Pod): Unit = {
     assert(executorPod.getSpec.getContainers.get(0).getImage === image)
-    assert(executorPod.getSpec.getContainers.get(0).getName === "executor")
+    assert(executorPod.getSpec.getContainers.get(0).getName === "spark-kubernetes-executor")
     assert(executorPod.getSpec.getContainers.get(0).getResources.getRequests.get("memory").getAmount
       === baseMemory)
   }
 
   protected def doBasicExecutorPyPodCheck(executorPod: Pod): Unit = {
     assert(executorPod.getSpec.getContainers.get(0).getImage === pyImage)
-    assert(executorPod.getSpec.getContainers.get(0).getName === "executor")
+    assert(executorPod.getSpec.getContainers.get(0).getName === "spark-kubernetes-executor")
     assert(executorPod.getSpec.getContainers.get(0).getResources.getRequests.get("memory").getAmount
       === standardNonJVMMemory)
   }
 
   protected def doBasicExecutorRPodCheck(executorPod: Pod): Unit = {
     assert(executorPod.getSpec.getContainers.get(0).getImage === rImage)
-    assert(executorPod.getSpec.getContainers.get(0).getName === "executor")
+    assert(executorPod.getSpec.getContainers.get(0).getName === "spark-kubernetes-executor")
     assert(executorPod.getSpec.getContainers.get(0).getResources.getRequests.get("memory").getAmount
       === standardNonJVMMemory)
   }
