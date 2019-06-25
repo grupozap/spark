@@ -138,15 +138,7 @@ class ExecutorPodsAllocatorSuite extends SparkFunSuite with BeforeAndAfter {
     snapshotsStore.notifySubscribers()
     snapshotsStore.replaceSnapshot(Seq.empty[Pod])
     waitForExecutorPodsClock.setTime(podCreationTimeout + 1)
-    when(podOperations
-      .withLabel(SPARK_APP_ID_LABEL, TEST_SPARK_APP_ID))
-      .thenReturn(podOperations)
-    when(podOperations
-      withLabel(SPARK_ROLE_LABEL, SPARK_POD_EXECUTOR_ROLE))
-      .thenReturn(podOperations)
-    when(podOperations
-      .withLabel(SPARK_EXECUTOR_ID_LABEL, "1"))
-      .thenReturn(labeledPods)
+    when(podOperations.withLabel(SPARK_EXECUTOR_ID_LABEL, "1")).thenReturn(labeledPods)
     snapshotsStore.notifySubscribers()
     verify(labeledPods).delete()
     verify(podOperations).create(podWithAttachedContainerForId(2))
@@ -170,6 +162,7 @@ class ExecutorPodsAllocatorSuite extends SparkFunSuite with BeforeAndAfter {
         } else {
           val k8sConf = argument.asInstanceOf[KubernetesConf[KubernetesExecutorSpecificConf]]
           val executorSpecificConf = k8sConf.roleSpecificConf
+          // TODO: HADOOP_CONF_DIR
           val expectedK8sConf = KubernetesConf.createExecutorConf(
             conf,
             executorSpecificConf.executorId,
